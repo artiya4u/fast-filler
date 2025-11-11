@@ -8,7 +8,9 @@ const addRuleBtn = document.getElementById('add-rule-btn');
 const ruleForm = document.getElementById('rule-form');
 const formTitle = document.getElementById('form-title');
 const ruleNameInput = document.getElementById('rule-name');
-const cssSelectorInput = document.getElementById('css-selector');
+const selectorsList = document.getElementById('selectors-list');
+const newSelectorInput = document.getElementById('new-selector-input');
+const addSelectorBtn = document.getElementById('add-selector-btn');
 const fillValueInput = document.getElementById('fill-value');
 const ruleEnabledCheckbox = document.getElementById('rule-enabled');
 const saveRuleBtn = document.getElementById('save-rule-btn');
@@ -19,6 +21,9 @@ const importBtn = document.getElementById('import-btn');
 const importFile = document.getElementById('import-file');
 const autoFillEnabledCheckbox = document.getElementById('auto-fill-enabled');
 const autoFillDelayInput = document.getElementById('auto-fill-delay');
+
+// Current selectors being edited
+let currentSelectors = [];
 
 // Load rules from storage
 async function loadRules() {
@@ -52,6 +57,54 @@ async function saveSettings() {
   console.log('[Fix Filler] Settings saved:', { autoFillEnabled, autoFillDelay });
 }
 
+// Render selectors list in the form
+function renderSelectorsList() {
+  if (currentSelectors.length === 0) {
+    selectorsList.innerHTML = '<div class="empty-state" style="font-size: 12px; color: #666; padding: 8px;">No selectors added yet</div>';
+    return;
+  }
+
+  selectorsList.innerHTML = currentSelectors.map((selector, index) => `
+    <div class="selector-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px;">
+      <code style="flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(selector)}</code>
+      <button type="button" class="btn-remove-selector" data-index="${index}" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">Remove</button>
+    </div>
+  `).join('');
+
+  // Add event listeners to remove buttons
+  document.querySelectorAll('.btn-remove-selector').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.target.dataset.index);
+      removeSelector(index);
+    });
+  });
+}
+
+// Add a selector to the current list
+function addSelector() {
+  const selector = newSelectorInput.value.trim();
+
+  if (!selector) {
+    alert('Please enter a CSS selector');
+    return;
+  }
+
+  if (currentSelectors.includes(selector)) {
+    alert('This selector has already been added');
+    return;
+  }
+
+  currentSelectors.push(selector);
+  newSelectorInput.value = '';
+  renderSelectorsList();
+}
+
+// Remove a selector from the current list
+function removeSelector(index) {
+  currentSelectors.splice(index, 1);
+  renderSelectorsList();
+}
+
 // Render rules list
 function renderRules() {
   if (rules.length === 0) {
@@ -59,12 +112,18 @@ function renderRules() {
     return;
   }
 
-  rulesList.innerHTML = rules.map((rule, index) => `
+  rulesList.innerHTML = rules.map((rule, index) => {
+    // Support both old (selector) and new (selectors) format
+    const selectors = rule.selectors || (rule.selector ? [rule.selector] : []);
+    const selectorsDisplay = selectors.length > 0
+      ? selectors.map(s => `<code style="font-size: 11px; background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-right: 4px;">${escapeHtml(s)}</code>`).join(' ')
+      : '<em>No selectors</em>';
+
+    return `
     <div class="rule-item ${rule.enabled ? '' : 'disabled'}">
       <div class="rule-info">
         <div class="rule-name">${escapeHtml(rule.name)}</div>
         <div class="rule-details">
-<!--          <div><strong>Selector:</strong> ${escapeHtml(rule.selector)}</div>-->
           <div><strong>Value:</strong> ${escapeHtml(rule.value)}</div>
         </div>
       </div>
@@ -73,7 +132,8 @@ function renderRules() {
         <button class="btn btn-small btn-delete" data-index="${index}">Delete</button>
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 
   // Add event listeners to edit and delete buttons
   document.querySelectorAll('.btn-edit').forEach(btn => {
@@ -95,10 +155,12 @@ function renderRules() {
 function showAddRuleForm() {
   formTitle.textContent = 'Add New Rule';
   ruleNameInput.value = '';
-  cssSelectorInput.value = '';
+  currentSelectors = [];
+  newSelectorInput.value = '';
   fillValueInput.value = '';
   ruleEnabledCheckbox.checked = true;
   editingRuleId = null;
+  renderSelectorsList();
   ruleForm.classList.remove('hidden');
 }
 
@@ -107,10 +169,13 @@ function editRule(index) {
   const rule = rules[index];
   formTitle.textContent = 'Edit Rule';
   ruleNameInput.value = rule.name;
-  cssSelectorInput.value = rule.selector;
+  // Support both old (selector) and new (selectors) format
+  currentSelectors = rule.selectors || (rule.selector ? [rule.selector] : []);
+  newSelectorInput.value = '';
   fillValueInput.value = rule.value;
   ruleEnabledCheckbox.checked = rule.enabled;
   editingRuleId = index;
+  renderSelectorsList();
   ruleForm.classList.remove('hidden');
 }
 
@@ -126,16 +191,20 @@ async function deleteRule(index) {
 // Save rule
 async function saveRule() {
   const name = ruleNameInput.value.trim();
-  const selector = cssSelectorInput.value.trim();
   const value = fillValueInput.value.trim();
   const enabled = ruleEnabledCheckbox.checked;
 
-  if (!name || !selector || !value) {
-    alert('Please fill in all fields');
+  if (!name || !value) {
+    alert('Please enter a rule name and fill value');
     return;
   }
 
-  const rule = { name, selector, value, enabled };
+  if (currentSelectors.length === 0) {
+    alert('Please add at least one CSS selector');
+    return;
+  }
+
+  const rule = { name, selectors: currentSelectors, value, enabled };
 
   if (editingRuleId !== null) {
     rules[editingRuleId] = rule;
@@ -223,9 +292,12 @@ async function handleFileImport(event) {
         return;
       }
 
-      // Validate rules structure
+      // Validate rules structure (support both old and new format)
       const isValid = importedRules.every(rule =>
-        rule.name && rule.selector && rule.value !== undefined && typeof rule.enabled === 'boolean'
+        rule.name &&
+        (rule.selectors || rule.selector) &&
+        rule.value !== undefined &&
+        typeof rule.enabled === 'boolean'
       );
 
       if (!isValid) {
@@ -260,12 +332,21 @@ function escapeHtml(text) {
 
 // Event listeners
 addRuleBtn.addEventListener('click', showAddRuleForm);
+addSelectorBtn.addEventListener('click', addSelector);
 saveRuleBtn.addEventListener('click', saveRule);
 cancelRuleBtn.addEventListener('click', hideRuleForm);
 fillNowBtn.addEventListener('click', fillCurrentPage);
 exportBtn.addEventListener('click', exportRules);
 importBtn.addEventListener('click', importRules);
 importFile.addEventListener('change', handleFileImport);
+
+// Allow pressing Enter in the selector input to add it
+newSelectorInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addSelector();
+  }
+});
 
 // Settings event listeners
 autoFillEnabledCheckbox.addEventListener('change', saveSettings);

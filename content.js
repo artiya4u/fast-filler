@@ -17,25 +17,51 @@ function fillForm(rules) {
 
   rules.forEach(rule => {
     try {
-      const elements = document.querySelectorAll(rule.selector);
+      // Support both old (selector) and new (selectors) format
+      const selectors = rule.selectors || (rule.selector ? [rule.selector] : []);
 
-      if (elements.length === 0) {
-        console.warn(`[Fix Filler] No elements found for selector: ${rule.selector}`);
-        errors.push(`No elements found for: ${rule.name}`);
+      if (selectors.length === 0) {
+        console.warn(`[Fix Filler] No selectors defined for rule: ${rule.name}`);
+        errors.push(`No selectors for: ${rule.name}`);
         errorCount++;
         return;
       }
 
-      elements.forEach((element, index) => {
+      let foundAnyElements = false;
+
+      // Process each selector in the rule
+      selectors.forEach(selector => {
         try {
-          fillElement(element, rule.value);
-          console.log(`[Fix Filler] Filled element ${index + 1}/${elements.length} for rule: ${rule.name}`);
-          filledCount++;
+          const elements = document.querySelectorAll(selector);
+
+          if (elements.length === 0) {
+            console.warn(`[Fix Filler] No elements found for selector: ${selector}`);
+            return;
+          }
+
+          foundAnyElements = true;
+
+          elements.forEach((element, index) => {
+            try {
+              fillElement(element, rule.value);
+              console.log(`[Fix Filler] Filled element ${index + 1}/${elements.length} for selector "${selector}" in rule: ${rule.name}`);
+              filledCount++;
+            } catch (error) {
+              console.error(`[Fix Filler] Error filling element for rule ${rule.name}, selector ${selector}:`, error);
+              errorCount++;
+            }
+          });
         } catch (error) {
-          console.error(`[Fix Filler] Error filling element for rule ${rule.name}:`, error);
+          console.error(`[Fix Filler] Error processing selector ${selector} in rule ${rule.name}:`, error);
+          errors.push(`Error in selector "${selector}" for rule "${rule.name}": ${error.message}`);
           errorCount++;
         }
       });
+
+      if (!foundAnyElements) {
+        errors.push(`No elements found for any selector in: ${rule.name}`);
+        errorCount++;
+      }
     } catch (error) {
       console.error(`[Fix Filler] Error processing rule ${rule.name}:`, error);
       errors.push(`Error in rule "${rule.name}": ${error.message}`);
@@ -243,10 +269,21 @@ async function autoFillOnLoad() {
     // Check if any of the CSS selectors match elements on this page
     const matchingRules = enabledRules.filter(rule => {
       try {
-        const elements = document.querySelectorAll(rule.selector);
-        return elements.length > 0;
+        // Support both old (selector) and new (selectors) format
+        const selectors = rule.selectors || (rule.selector ? [rule.selector] : []);
+
+        // Check if any of the selectors match elements on the page
+        return selectors.some(selector => {
+          try {
+            const elements = document.querySelectorAll(selector);
+            return elements.length > 0;
+          } catch (error) {
+            console.warn(`[Fix Filler] Invalid selector: ${selector}`, error);
+            return false;
+          }
+        });
       } catch (error) {
-        console.warn(`[Fix Filler] Invalid selector: ${rule.selector}`, error);
+        console.warn(`[Fix Filler] Error processing rule: ${rule.name}`, error);
         return false;
       }
     });
