@@ -1,10 +1,10 @@
-// Background service worker for Fix Filler
+// Background service worker for Fast Filler
 // This handles background tasks and extension lifecycle events
 
 // Installation handler
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[Fix Filler] Extension installed');
+    console.log('[Fast Filler] Extension installed');
 
     // Set up default rules (optional)
     chrome.storage.sync.get(['fillRules'], (result) => {
@@ -14,13 +14,13 @@ chrome.runtime.onInstalled.addListener((details) => {
       }
     });
   } else if (details.reason === 'update') {
-    console.log('[Fix Filler] Extension updated to version', chrome.runtime.getManifest().version);
+    console.log('[Fast Filler] Extension updated to version', chrome.runtime.getManifest().version);
   }
 });
 
 // Handle messages from content script or popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('[Fix Filler] Message received:', request);
+  console.log('[Fast Filler] Message received:', request);
 
   // Handle different message types
   if (request.action === 'getRules') {
@@ -39,7 +39,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'fillFormNow',
-    title: 'Fill form with Fix Filler',
+    title: 'Fill form with Fast Filler',
     contexts: ['page', 'frame']
   });
 });
@@ -77,4 +77,4 @@ chrome.commands?.onCommand.addListener(async (command) => {
   }
 });
 
-console.log('[Fix Filler] Background service worker initialized');
+console.log('[Fast Filler] Background service worker initialized');

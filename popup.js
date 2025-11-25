@@ -54,7 +54,7 @@ async function saveSettings() {
     autoFillDelay
   });
 
-  console.log('[Fix Filler] Settings saved:', { autoFillEnabled, autoFillDelay });
+  console.log('[Fast Filler] Settings saved:', { autoFillEnabled, autoFillDelay });
 }
 
 // Render selectors list in the form
@@ -267,7 +267,7 @@ function exportRules() {
   const url = URL.createObjectURL(dataBlob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'fix-filler-rules.json';
+  link.download = 'fast-filler-rules.json';
   link.click();
   URL.revokeObjectURL(url);
 }

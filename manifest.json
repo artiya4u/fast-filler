@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Fix Filler",
+  "name": "Fast Filler",
   "version": "1.0.2",
-  "description": "A Chrome extension that helps you fill out online forms with predefined information using CSS selectors",
+  "description": "A Chrome extension that helps you quickly fill out online forms with predefined information using CSS selectors",
   "permissions": [
     "storage",
     "activeTab",

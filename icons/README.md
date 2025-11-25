@@ -1,6 +1,6 @@
 # Icon Assets
 
-This directory contains the icon assets for the Fix Filler Chrome extension.
+This directory contains the icon assets for the Fast Filler Chrome extension.
 
 ## Files
 

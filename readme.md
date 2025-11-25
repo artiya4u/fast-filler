@@ -1,4 +1,4 @@
-# Fix Filler
+# Fast Filler
 
 A Chrome extension that helps you fill out online forms with predefined information using CSS selectors to target specific fields. Perfect for fields that Chrome's built-in autofill can't handle well, such as custom email-password fields or non-standard form inputs.
 
@@ -22,13 +22,13 @@ A Chrome extension that helps you fill out online forms with predefined informat
 3. Open Chrome and navigate to `chrome://extensions/`
 4. Enable "Developer mode" in the top right
 5. Click "Load unpacked"
-6. Select the `fix_filler` directory
+6. Select the `fast_filler` directory
 
 ## Usage
 
 ### Creating a Rule
 
-1. Click the Fix Filler extension icon in your browser toolbar
+1. Click the Fast Filler extension icon in your browser toolbar
 2. Click "+ Add New Rule"
 3. Fill in the form:
    - **Rule Name**: A descriptive name (e.g., "Email Field")
@@ -82,7 +82,7 @@ Click the "Fill Current Page" button in the popup to manually fill the current p
 ### Project Structure
 
 ```
-fix_filler/
+fast_filler/
 ├── manifest.json         # Chrome extension manifest
 ├── popup.html           # Extension popup UI
 ├── popup.css            # Popup styles

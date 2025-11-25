@@ -13,7 +13,7 @@ async function fillForm(rules) {
   let errorCount = 0;
   const errors = [];
 
-  console.log('[Fix Filler] Starting to fill form with', rules.length, 'rules');
+  console.log('[Fast Filler] Starting to fill form with', rules.length, 'rules');
 
   try {
     for (const rule of rules) {
@@ -22,7 +22,7 @@ async function fillForm(rules) {
         const selectors = rule.selectors || (rule.selector ? [rule.selector] : []);
 
         if (selectors.length === 0) {
-          console.log(`[Fix Filler] No selectors defined for rule: ${rule.name}`);
+          console.log(`[Fast Filler] No selectors defined for rule: ${rule.name}`);
           errors.push(`No selectors for: ${rule.name}`);
           errorCount++;
           continue;
@@ -37,7 +37,7 @@ async function fillForm(rules) {
             const elements = document.querySelectorAll(selector);
 
             if (elements.length === 0) {
-              console.log(`[Fix Filler] No elements found for selector: ${selector}`);
+              console.log(`[Fast Filler] No elements found for selector: ${selector}`);
               continue;
             }
 
@@ -48,7 +48,7 @@ async function fillForm(rules) {
               const element = elements[index];
               try {
                 await fillElement(element, rule.value);
-                console.log(`[Fix Filler] Filled element ${index + 1}/${elements.length} for selector "${selector}" in rule: ${rule.name}`);
+                console.log(`[Fast Filler] Filled element ${index + 1}/${elements.length} for selector "${selector}" in rule: ${rule.name}`);
                 filledCount++;
                 selectorFilledElements = true;
                 filledAnyElements = true;
@@ -58,7 +58,7 @@ async function fillForm(rules) {
                   await new Promise(resolve => setTimeout(resolve, 100));
                 }
               } catch (error) {
-                console.log(`[Fix Filler] Error filling element for rule ${rule.name}, selector ${selector}:`, error);
+                console.log(`[Fast Filler] Error filling element for rule ${rule.name}, selector ${selector}:`, error);
                 errorCount++;
               }
             }
@@ -71,7 +71,7 @@ async function fillForm(rules) {
               }
             }
           } catch (error) {
-            console.log(`[Fix Filler] Error processing selector ${selector} in rule ${rule.name}:`, error);
+            console.log(`[Fast Filler] Error processing selector ${selector} in rule ${rule.name}:`, error);
             errors.push(`Error in selector "${selector}" for rule "${rule.name}": ${error.message}`);
             errorCount++;
           }
@@ -90,13 +90,13 @@ async function fillForm(rules) {
           }
         }
       } catch (error) {
-        console.log(`[Fix Filler] Error processing rule ${rule.name}:`, error);
+        console.log(`[Fast Filler] Error processing rule ${rule.name}:`, error);
         errors.push(`Error in rule "${rule.name}": ${error.message}`);
         errorCount++;
       }
     }
   } finally {
-    console.log('[Fix Filler] Restored original dialog functions');
+    console.log('[Fast Filler] Restored original dialog functions');
   }
 
   // Show notification
@@ -205,7 +205,7 @@ async function fillElement(element, value) {
       // For checkboxes and radio buttons, check if value is truthy
       element.checked = Boolean(value);
     } else if (type === 'file') {
-      console.log('[Fix Filler] File inputs cannot be filled programmatically');
+      console.log('[Fast Filler] File inputs cannot be filled programmatically');
       return;
     } else {
       // For text, email, password, number, etc. - use keyboard typing simulation
@@ -291,14 +291,14 @@ function triggerEvents(element) {
 // Show notification overlay
 function showNotification(filledCount, errorCount, errors) {
   // Remove existing notification if any
-  const existing = document.getElementById('fix-filler-notification');
+  const existing = document.getElementById('fast-filler-notification');
   if (existing) {
     existing.remove();
   }
 
   // Create notification element
   const notification = document.createElement('div');
-  notification.id = 'fix-filler-notification';
+  notification.id = 'fast-filler-notification';
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -316,7 +316,7 @@ function showNotification(filledCount, errorCount, errors) {
     animation: slideIn 0.3s ease-out;
   `;
 
-  let message = `Fix Filler: Filled ${filledCount} field${filledCount !== 1 ? 's' : ''}`;
+  let message = `Fast Filler: Filled ${filledCount} field${filledCount !== 1 ? 's' : ''}`;
 
   notification.textContent = message;
   notification.style.whiteSpace = 'pre-line';
@@ -360,15 +360,15 @@ async function autoFillOnLoad() {
     const autoFillDelay = result.autoFillDelay !== undefined ? result.autoFillDelay : 100;
     const rules = result.fillRules || [];
 
-    console.log('[Fix Filler] Auto-fill settings:', { autoFillEnabled, autoFillDelay, rulesCount: rules.length });
+    console.log('[Fast Filler] Auto-fill settings:', { autoFillEnabled, autoFillDelay, rulesCount: rules.length });
 
     if (!autoFillEnabled) {
-      console.log('[Fix Filler] Auto-fill is disabled');
+      console.log('[Fast Filler] Auto-fill is disabled');
       return;
     }
 
     if (rules.length === 0) {
-      console.log('[Fix Filler] No rules configured');
+      console.log('[Fast Filler] No rules configured');
       return;
     }
 
@@ -376,7 +376,7 @@ async function autoFillOnLoad() {
     const enabledRules = rules.filter(rule => rule.enabled);
 
     if (enabledRules.length === 0) {
-      console.log('[Fix Filler] No enabled rules');
+      console.log('[Fast Filler] No enabled rules');
       return;
     }
 
@@ -392,31 +392,31 @@ async function autoFillOnLoad() {
             const elements = document.querySelectorAll(selector);
             return elements.length > 0;
           } catch (error) {
-            console.log(`[Fix Filler] Invalid selector: ${selector}`, error);
+            console.log(`[Fast Filler] Invalid selector: ${selector}`, error);
             return false;
           }
         });
       } catch (error) {
-        console.log(`[Fix Filler] Error processing rule: ${rule.name}`, error);
+        console.log(`[Fast Filler] Error processing rule: ${rule.name}`, error);
         return false;
       }
     });
 
     if (matchingRules.length === 0) {
-      console.log('[Fix Filler] No matching CSS selectors found on this page');
+      console.log('[Fast Filler] No matching CSS selectors found on this page');
       return;
     }
 
-    console.log(`[Fix Filler] Found ${matchingRules.length} matching rules. Auto-filling in ${autoFillDelay}ms...`);
+    console.log(`[Fast Filler] Found ${matchingRules.length} matching rules. Auto-filling in ${autoFillDelay}ms...`);
 
     // Wait for the specified delay before auto-filling
     setTimeout(() => {
       fillForm(enabledRules);
-      console.log('[Fix Filler] Auto-fill completed');
+      console.log('[Fast Filler] Auto-fill completed');
     }, autoFillDelay);
 
   } catch (error) {
-    console.log('[Fix Filler] Error in auto-fill on load:', error);
+    console.log('[Fast Filler] Error in auto-fill on load:', error);
   }
 }
 
@@ -429,4 +429,4 @@ if (document.readyState === 'loading') {
 }
 
 // Log when content script is loaded
-console.log('[Fix Filler] Content script loaded and ready');
+console.log('[Fast Filler] Content script loaded and ready');
